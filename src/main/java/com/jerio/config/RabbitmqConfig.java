@@ -112,8 +112,12 @@ public class RabbitmqConfig {
         rabbitTemplate.setConfirmCallback((correlationData, ack, cause) -> {
             String id = correlationData.getId();
             if(ack){
+                // 成功发送到队列后后调（与消费者是否成功消费无关）
                 System.out.println("消息 ："+id+"  收到确认信息");
             }else {
+                // basic.nack will only be delivered if an internal error
+                // occurs in the Erlang process responsible for a queue.
+                // 仅在Erlang发生内部错误,未能将消息发送至队列时调用
                 System.out.println("消息 ："+id+"  没有收到却信息");
                 System.out.println("casue ："+cause);
             }
