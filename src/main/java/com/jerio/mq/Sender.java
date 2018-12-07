@@ -3,17 +3,26 @@ package com.jerio.mq;
 import com.jerio.config.RabbitmqConfig;
 import com.jerio.domain.User;
 import org.springframework.amqp.core.AmqpTemplate;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.rabbit.support.CorrelationData;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+
+import java.util.UUID;
 
 
 /**
  * Created by Jerio on 2018/8/12
  */
 @Component
-public class Sender {
+public class Sender{
     @Autowired
     private  AmqpTemplate amqpTemplate;
+
+    @Autowired
+    @Qualifier("myRabbitTemplate")
+    private RabbitTemplate rabbitTemplate;
 
     User user1 = new User("user1");
     User user2 = new User("user2");
@@ -29,7 +38,6 @@ public class Sender {
     public void sendByDirect(){
         System.out.println("Direct模式");
         System.out.println("生产者 发送消息  ");
-        //convertAndSend(String routingKey, Object object)
         amqpTemplate.convertAndSend(RabbitmqConfig.QUEUE_1, user1);
         amqpTemplate.convertAndSend(RabbitmqConfig.QUEUE_2, user2);
     }
@@ -71,5 +79,12 @@ public class Sender {
         amqpTemplate.convertAndSend(RabbitmqConfig.FANOUT_EXCHANGE,"",user2);
         //routingKey的值 无影响
         amqpTemplate.convertAndSend(RabbitmqConfig.FANOUT_EXCHANGE,"key",user1);
+    }
+
+    public void sendDirectAck(){
+        System.out.println("Direct模式");
+        System.out.println("生产者 发送消息  ");
+        CorrelationData correlationData = new CorrelationData(UUID.randomUUID().toString());
+        rabbitTemplate.convertAndSend(RabbitmqConfig.QUEUE_1, user1,correlationData);
     }
 }

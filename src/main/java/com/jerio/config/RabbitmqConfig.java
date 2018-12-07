@@ -1,6 +1,9 @@
 package com.jerio.config;
 
 import org.springframework.amqp.core.*;
+import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -86,5 +89,35 @@ public class RabbitmqConfig {
     @Bean
     public Binding fanoutBinding2(){
         return BindingBuilder.bind(topicQueue2()).to(fanoutExchange());
+    }
+
+
+    @Autowired
+    ConnectionFactory connectionFactory;
+
+    @Bean
+    public RabbitTemplate myRabbitTemplate(){
+        RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
+        // Mandatory = true,则生产者发送消失失败时，会先调用ReturnCallback，再调用ConfirmCallback
+        rabbitTemplate.setMandatory(true);
+        rabbitTemplate.setReturnCallback((message, replyCode, replyText, exchange, routingKey) -> {
+            System.out.println("消息发送失败");
+            System.out.println("message : "+message.getMessageProperties().getCorrelationId());
+            System.out.println("replyCode : "+replyCode);
+            System.out.println("replyText : "+replyText);
+            System.out.println("exchange : "+exchange);
+            System.out.println("routingKey : "+routingKey);
+        });
+
+        rabbitTemplate.setConfirmCallback((correlationData, ack, cause) -> {
+            String id = correlationData.getId();
+            if(ack){
+                System.out.println("消息 ："+id+"  收到确认信息");
+            }else {
+                System.out.println("消息 ："+id+"  没有收到却信息");
+                System.out.println("casue ："+cause);
+            }
+        });
+        return rabbitTemplate;
     }
 }

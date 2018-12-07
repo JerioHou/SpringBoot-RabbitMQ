@@ -31,4 +31,9 @@ public class RabbitmqApplicationTests {
 	public void sendByFanout(){
 		sender.sendByFanout();
 	}
+
+	@Test
+    public void testAck(){
+        sender.sendDirectAck();
+    }
 }
